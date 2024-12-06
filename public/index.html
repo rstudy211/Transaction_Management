@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secure Payment Checkout</title>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container mx-auto max-w-md">
+      <div class="bg-white shadow-md rounded-lg p-8 space-y-6">
+        <h2 class="text-2xl font-bold text-center text-gray-800">
+          Secure Payment
+        </h2>
+
+        <!-- Amount and Description -->
+        <div id="paymentInfo" class="text-center text-gray-600 mb-4">
+          <p id="amountDisplay">
+            Amount to Pay: ₹<span id="amountValue">21</span>
+          </p>
+          <p>Description: Initiate Payment</p>
+        </div>
+
+        <!-- Amount Input -->
+        <div class="mb-4">
+          <label for="amountInput" class="block text-gray-700"
+            >Enter Amount</label
+          >
+          <input
+            type="number"
+            id="amountInput"
+            min="1"
+            class="w-full px-4 py-2 mt-2 border rounded-lg"
+            placeholder="Enter amount"
+            value="21"
+          />
+        </div>
+
+        <!-- Sender ID Input -->
+        <div class="mb-4">
+          <label for="senderIdInput" class="block text-gray-700"
+            >Enter Sender ID</label
+          >
+          <input
+            type="text"
+            id="senderIdInput"
+            class="w-full px-4 py-2 mt-2 border rounded-lg"
+            placeholder="Enter your ID"
+            value="6751f3533c87709cc24f8c1e"
+          />
+        </div>
+
+        <!-- Pay Button -->
+        <button
+          id="renderBtn"
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
+          Pay Now
+        </button>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="text-center mt-4 hidden">
+          <p id="messageText" class="text-sm"></p>
+        </div>
+      </div>
+      <!-- <div class=""></div> -->
+    </div>
+
+    <script>
+      // Payment Configuration (default values)
+      const CONFIG = {
+        SENDER_ID: "6751f3533c87709cc24f8c1e", // Default sender ID, can be overridden by user
+        RECEIVER_ID: "6751f3803c87709cc24f8c20", // Static receiver ID
+        AMOUNT: 21, // Default amount, will be overwritten by user input
+        DESCRIPTION: "Initiate Payment",
+      };
+
+      // DOM Elements
+      const payButton = document.getElementById("renderBtn");
+      const statusMessageEl = document.getElementById("statusMessage");
+      const messageTextEl = document.getElementById("messageText");
+      const amountInput = document.getElementById("amountInput");
+      const amountValueEl = document.getElementById("amountValue");
+      const senderIdInput = document.getElementById("senderIdInput");
+
+      // Utility Functions
+      function showMessage(message, isError = false) {
+        statusMessageEl.classList.remove("hidden");
+        messageTextEl.textContent = message;
+        messageTextEl.className = isError ? "text-red-500" : "text-green-500";
+      }
+
+      function disablePaymentButton(disabled = true) {
+        payButton.disabled = disabled;
+        payButton.classList.toggle("opacity-50", disabled);
+        payButton.classList.toggle("cursor-not-allowed", disabled);
+      }
+
+      // Initialize Cashfree
+      const cashfree = Cashfree({
+        mode: "sandbox", // Change to 'production' for live payments
+      });
+
+      // Update Amount Value Display
+      function updateAmountDisplay() {
+        const enteredAmount = parseFloat(amountInput.value) || CONFIG.AMOUNT;
+        amountValueEl.textContent = enteredAmount.toFixed(2); // Display with two decimal points
+        CONFIG.AMOUNT = enteredAmount; // Update the global CONFIG with the new amount
+      }
+
+      // Update Sender ID
+      function updateSenderId() {
+        const enteredSenderId = senderIdInput.value || CONFIG.SENDER_ID;
+        CONFIG.SENDER_ID = enteredSenderId; // Update the global CONFIG with the new sender ID
+      }
+
+      // Payment Initiation Handler
+      async function initiatePayment() {
+        try {
+          // Disable button to prevent multiple clicks
+          disablePaymentButton(true);
+
+          // Clear previous messages
+          statusMessageEl.classList.add("hidden");
+
+          // Prepare payment request
+          const paymentRequest = {
+            senderId: CONFIG.SENDER_ID,
+            receiverId: CONFIG.RECEIVER_ID,
+            amount: CONFIG.AMOUNT,
+            type: "income",
+            description: CONFIG.DESCRIPTION,
+          };
+
+          // Initiate payment session
+          const response = await fetch("/api/transactions/initiate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(paymentRequest),
+          });
+
+          // Check response status
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Payment initiation failed");
+          }
+
+          const sessionData = await response.json();
+
+          // Validate session data
+          if (!sessionData.paymentSessionId) {
+            throw new Error("Invalid payment session");
+          }
+
+          // Checkout configuration
+          let checkoutOptions = {
+            paymentSessionId: sessionData.paymentSessionId,
+            redirectTarget: "_self",
+          };
+
+          // Open Cashfree Checkout
+          cashfree.checkout(checkoutOptions);
+        } catch (error) {
+          console.error("Payment Initiation Error:", error);
+          showMessage(error.message, true);
+        } finally {
+          // Re-enable button
+          disablePaymentButton(false);
+        }
+      }
+
+      // Attach Event Listener
+      payButton.addEventListener("click", initiatePayment);
+
+      // Update amount when the user changes the input
+      amountInput.addEventListener("input", updateAmountDisplay);
+
+      // Update sender ID when the user changes the input
+      senderIdInput.addEventListener("input", updateSenderId);
+
+      // Optional: Handle Cashfree Checkout Events
+      window.addEventListener("message", (event) => {
+        // This can be used to handle payment status
+        if (event.data && event.data.type === "PAYMENT_STATUS") {
+          console.log("Payment Status:", event.data.status);
+        }
+      });
+
+      // Initialize amount and sender ID displays
+      updateAmountDisplay();
+      updateSenderId();
+    </script>
+  </body>
+</html>

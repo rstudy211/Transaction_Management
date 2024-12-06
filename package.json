@@ -1,0 +1,27 @@
+{
+  "name": "transaction-management",
+  "version": "1.0.0",
+  "description": "System Architecture: - core features     Identify core features:     Add, update, delete transactions.     Categorize transactions (e.g., income, expense).     Generate summaries or reports.     Authentication and authorization (optional).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@cashfreepayments/cashfree-js": "^1.0.5",
+    "body-parser": "^1.20.3",
+    "cashfree-pg": "^4.3.1",
+    "cashfree-sdk": "^0.1.1",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.1",
+    "install": "^0.13.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.3",
+    "nodemon": "^3.1.7",
+    "uuid": "^11.0.3"
+  }
+}
