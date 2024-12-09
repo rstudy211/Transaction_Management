@@ -6,135 +6,183 @@
     <title>Secure Payment Checkout</title>
     <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Custom scrollbar */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #4299e1 #e2e8f0;
+      }
+      *::-webkit-scrollbar {
+        width: 8px;
+      }
+      *::-webkit-scrollbar-track {
+        background: #e2e8f0;
+      }
+      *::-webkit-scrollbar-thumb {
+        background-color: #4299e1;
+        border-radius: 20px;
+      }
+    </style>
   </head>
-
-  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <body
+    class="bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center min-h-screen p-4"
+  >
     <div class="container mx-auto max-w-md">
-      <div class="bg-white shadow-md rounded-lg p-8 space-y-6">
-        <h2 class="text-2xl font-bold text-center text-gray-800">
-          Secure Payment
-        </h2>
+      <div
+        class="bg-white shadow-2xl rounded-xl p-8 space-y-6 border border-gray-200 transform transition-all duration-300 hover:scale-105"
+      >
+        <!-- Header -->
+        <div class="text-center">
+          <h2 class="text-3xl font-extrabold text-gray-800 mb-2">
+            Welcome, <span id="userName">User</span>!
+          </h2>
+          <p class="text-gray-500 text-sm" id="userEmail">
+            Your email will appear here.
+          </p>
+        </div>
+        <!-- Payment Header -->
+        <div class="text-center">
+          <h2 class="text-3xl font-extrabold text-gray-800 mb-2">
+            Secure Payment
+          </h2>
+          <p class="text-gray-500 text-sm">Complete your transaction safely</p>
+        </div>
 
-        <!-- Amount and Description -->
-        <div id="paymentInfo" class="text-center text-gray-600 mb-4">
-          <p id="amountDisplay">
+        <!-- Payment Information -->
+        <div id="paymentInfo" class="text-center bg-blue-50 p-4 rounded-lg">
+          <p id="amountDisplay" class="text-xl font-bold text-gray-800">
             Amount to Pay: ₹<span id="amountValue">21</span>
           </p>
-          <p>Description: Initiate Payment</p>
+          <p class="text-gray-600 text-sm">Description: Initiate Payment</p>
         </div>
 
-        <!-- Amount Input -->
+        <!-- Amount Input with Validation -->
         <div class="mb-4">
-          <label for="amountInput" class="block text-gray-700"
-            >Enter Amount</label
+          <label for="amountInput" class="block text-gray-700 mb-2"
+            >Amount</label
           >
-          <input
-            type="number"
-            id="amountInput"
-            min="1"
-            class="w-full px-4 py-2 mt-2 border rounded-lg"
-            placeholder="Enter amount"
-            value="21"
-          />
+          <div class="relative">
+            <span
+              class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+              >₹</span
+            >
+            <input
+              type="number"
+              id="amountInput"
+              min="1"
+              max="100000"
+              step="0.01"
+              class="w-full pl-8 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300 transition duration-200"
+              placeholder="Enter amount"
+              value="21"
+              required
+            />
+          </div>
+          <p id="amountError" class="text-red-500 text-xs mt-1 hidden"></p>
         </div>
 
-        <!-- Sender ID Input -->
-        <div class="mb-4">
-          <label for="senderIdInput" class="block text-gray-700"
-            >Enter Sender ID</label
-          >
-          <input
-            type="text"
-            id="senderIdInput"
-            class="w-full px-4 py-2 mt-2 border rounded-lg"
-            placeholder="Enter your ID"
-            value="6751f3533c87709cc24f8c1e"
-          />
-        </div>
-
-        <!-- Pay Button -->
+        <!-- Pay Button with Enhanced Styling -->
         <button
           id="renderBtn"
-          class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Pay Now
+          <span class="flex items-center justify-center">
+            <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 6a1 1 0 011-1h.01a1 1 0 110 2H8a1 1 0 01-1-1zm5-1a1 1 0 100 2h.01a1 1 0 100-2H12z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            Pay Now
+          </span>
         </button>
 
-        <!-- Status Message -->
-        <div id="statusMessage" class="text-center mt-4 hidden">
-          <p id="messageText" class="text-sm"></p>
+        <!-- Logout Button -->
+        <button
+          id="logoutButton"
+          class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+        >
+          Logout
+        </button>
+
+        <!-- Status Message with Improved Styling -->
+        <div
+          id="statusMessage"
+          class="text-center mt-4 p-3 rounded-lg transition-all duration-300 hidden"
+        >
+          <p id="messageText" class="text-sm font-medium"></p>
         </div>
       </div>
-      <!-- <div class=""></div> -->
     </div>
 
     <script>
-      // Payment Configuration (default values)
       const CONFIG = {
-        SENDER_ID: "6751f3533c87709cc24f8c1e", // Default sender ID, can be overridden by user
-        RECEIVER_ID: "6751f3803c87709cc24f8c20", // Static receiver ID
-        AMOUNT: 21, // Default amount, will be overwritten by user input
         DESCRIPTION: "Initiate Payment",
+        MIN_AMOUNT: 1,
+        MAX_AMOUNT: 100000,
+        receiverId: "kjsdjsdksjskj",
       };
 
-      // DOM Elements
-      const payButton = document.getElementById("renderBtn");
-      const statusMessageEl = document.getElementById("statusMessage");
-      const messageTextEl = document.getElementById("messageText");
-      const amountInput = document.getElementById("amountInput");
-      const amountValueEl = document.getElementById("amountValue");
-      const senderIdInput = document.getElementById("senderIdInput");
+      const elements = {
+        payButton: document.getElementById("renderBtn"),
+        statusMessageEl: document.getElementById("statusMessage"),
+        messageTextEl: document.getElementById("messageText"),
+        amountInput: document.getElementById("amountInput"),
+        amountErrorEl: document.getElementById("amountError"),
+        logoutButton: document.getElementById("logoutButton"),
+      };
 
-      // Utility Functions
+      function validateAmount(amount) {
+        if (
+          isNaN(amount) ||
+          amount < CONFIG.MIN_AMOUNT ||
+          amount > CONFIG.MAX_AMOUNT
+        ) {
+          elements.amountErrorEl.textContent = `Amount must be between ₹${CONFIG.MIN_AMOUNT} and ₹${CONFIG.MAX_AMOUNT}`;
+          elements.amountErrorEl.classList.remove("hidden");
+          return false;
+        }
+        elements.amountErrorEl.classList.add("hidden");
+        return true;
+      }
+
       function showMessage(message, isError = false) {
-        statusMessageEl.classList.remove("hidden");
-        messageTextEl.textContent = message;
-        messageTextEl.className = isError ? "text-red-500" : "text-green-500";
+        elements.statusMessageEl.classList.remove("hidden");
+        elements.messageTextEl.textContent = message;
+        elements.statusMessageEl.className = `text-center mt-4 p-3 rounded-lg transition-all duration-300 ${
+          isError ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+        }`;
       }
 
       function disablePaymentButton(disabled = true) {
-        payButton.disabled = disabled;
-        payButton.classList.toggle("opacity-50", disabled);
-        payButton.classList.toggle("cursor-not-allowed", disabled);
+        elements.payButton.disabled = disabled;
       }
 
-      // Initialize Cashfree
-      const cashfree = Cashfree({
-        mode: "sandbox", // Change to 'production' for live payments
-      });
+      const cashfree = Cashfree({ mode: "sandbox" });
 
-      // Update Amount Value Display
-      function updateAmountDisplay() {
-        const enteredAmount = parseFloat(amountInput.value) || CONFIG.AMOUNT;
-        amountValueEl.textContent = enteredAmount.toFixed(2); // Display with two decimal points
-        CONFIG.AMOUNT = enteredAmount; // Update the global CONFIG with the new amount
-      }
-
-      // Update Sender ID
-      function updateSenderId() {
-        const enteredSenderId = senderIdInput.value || CONFIG.SENDER_ID;
-        CONFIG.SENDER_ID = enteredSenderId; // Update the global CONFIG with the new sender ID
-      }
-
-      // Payment Initiation Handler
       async function initiatePayment() {
+        // Reset previous errors
+        elements.amountErrorEl.classList.add("hidden");
+
+        const amount = parseFloat(elements.amountInput.value);
+
+        // Validate amount input
+        if (!validateAmount(amount)) {
+          return;
+        }
+
         try {
-          // Disable button to prevent multiple clicks
           disablePaymentButton(true);
+          elements.statusMessageEl.classList.add("hidden");
 
-          // Clear previous messages
-          statusMessageEl.classList.add("hidden");
-
-          // Prepare payment request
+          // Create the payment request payload
           const paymentRequest = {
-            senderId: CONFIG.SENDER_ID,
-            receiverId: CONFIG.RECEIVER_ID,
-            amount: CONFIG.AMOUNT,
+            amount: amount,
             type: "income",
-            description: CONFIG.DESCRIPTION,
+            description: CONFIG.DESCRIPTION, // Only sending amount
           };
 
-          // Initiate payment session
           const response = await fetch("/api/transactions/initiate", {
             method: "POST",
             headers: {
@@ -143,56 +191,103 @@
             body: JSON.stringify(paymentRequest),
           });
 
-          // Check response status
+          const data = await response.json();
+
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Payment initiation failed");
+            console.log("dksjd");
+            console.log(data);
+            if (
+              data.error === "Please authenticate." ||
+              response.status === 401
+            ) {
+              showMessage("Session expired. Please log in again.", true);
+              setTimeout(() => (window.location.href = "login.html"), 2000);
+            } else {
+              showMessage(data.message || "Payment initiation failed", true);
+            }
+            return;
           }
 
-          const sessionData = await response.json();
+          if (data.paymentSessionId) {
+            const checkoutOptions = {
+              paymentSessionId: data.paymentSessionId,
+              redirectTarget: "_self",
+            };
 
-          // Validate session data
-          if (!sessionData.paymentSessionId) {
+            cashfree.checkout(checkoutOptions);
+          } else {
             throw new Error("Invalid payment session");
           }
-
-          // Checkout configuration
-          let checkoutOptions = {
-            paymentSessionId: sessionData.paymentSessionId,
-            redirectTarget: "_self",
-          };
-
-          // Open Cashfree Checkout
-          cashfree.checkout(checkoutOptions);
         } catch (error) {
-          console.error("Payment Initiation Error:", error);
+          console.error("Payment Initiation Error:", error.message);
           showMessage(error.message, true);
         } finally {
-          // Re-enable button
           disablePaymentButton(false);
         }
       }
 
-      // Attach Event Listener
-      payButton.addEventListener("click", initiatePayment);
+      function logout() {
+        // Send a request to the backend logout endpoint
+        console.log("we are in logout");
+        fetch("/api/users/logout", {
+          method: "POST",
+        })
+          .then((response) => {
+            if (response.ok) {
+              // Clear any front-end token if necessary (e.g., in localStorage or sessionStorage)
+              document.cookie = "auth_token=; Max-Age=0; path=/"; // Clear the cookie
 
-      // Update amount when the user changes the input
-      amountInput.addEventListener("input", updateAmountDisplay);
+              // Redirect the user to the login page after successful logout
+              window.location.href = "login.html";
+            } else {
+              console.error("Logout failed");
+            }
+          })
+          .catch((error) => console.error("Error logging out:", error));
+      }
 
-      // Update sender ID when the user changes the input
-      senderIdInput.addEventListener("input", updateSenderId);
+      // Function to fetch user details
+      function fetchUserDetails() {
+        console.log("we are in userDetails")
+        fetch("/api/users/me", {
+          method: "GET",
+          // headers: {
+          //   Authorization: `Bearer ${getCookie("auth_token")}`, // Include the token for authorization
+          // },
+        })
+          .then((response) => {
+            if (response.ok) {
+              return response.json(); // Parse the JSON response
+            } else {
+              console.error("Failed to fetch user details");
+              return null;
+            }
+          })
+          .then((userData) => {
+            if (userData) {
+              // Populate user details in the placeholders
+              document.getElementById("userName").textContent = userData.name;
+              document.getElementById("userEmail").textContent = userData.email;
+            }
+          })
+          .catch((error) =>
+            console.error("Error fetching user details:", error)
+          );
+      }
 
-      // Optional: Handle Cashfree Checkout Events
-      window.addEventListener("message", (event) => {
-        // This can be used to handle payment status
-        if (event.data && event.data.type === "PAYMENT_STATUS") {
-          console.log("Payment Status:", event.data.status);
-        }
-      });
+      
 
-      // Initialize amount and sender ID displays
-      updateAmountDisplay();
-      updateSenderId();
+      // Fetch and display user details on page load
+      document.addEventListener("DOMContentLoaded", fetchUserDetails);
+
+      // Event Listeners
+      elements.payButton.addEventListener("click", initiatePayment);
+      elements.amountInput.addEventListener("input", () =>
+        validateAmount(parseFloat(elements.amountInput.value))
+      );
+
+      // Call the logout function when the user clicks the logout button
+      document.getElementById("logoutButton").addEventListener("click", logout);
     </script>
   </body>
 </html>

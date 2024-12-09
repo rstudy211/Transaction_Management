@@ -12,7 +12,7 @@ exports.createPaymentOrder = async (transactionDetails) => {
     const customerDetails = {
       customer_id: `USER-${customer?._id || 'UNKNOWN'}`, // Fallback to 'UNKNOWN' if user _id is undefined
       customer_name: customer?.name || 'Test Customer', // Default name
-      customer_phone: customer?.phone || '9999999999', // Default phone number
+      customer_phone: customer?.phoneNo || '9999999999', // Default phone number
       customer_email: customer?.email || 'abc@gmail.com', // Default email
     };
     // console.log(process.env.CASHFREE_NOTIFY_URL)

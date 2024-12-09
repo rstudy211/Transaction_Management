@@ -17,3 +17,7 @@ exports.getAllTransactions = async (filters = {}) => {
 exports.updateTransaction = async (transaction) => {
   return await transaction.save();
 };
+
+exports.countTransactions = async (filters)=>{
+  return await TransactionModel.countDocuments(filters);
+}

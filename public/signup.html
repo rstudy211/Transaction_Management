@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script>
+    async function handleSignUp(event) {
+      event.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const phoneNo = document.getElementById("phoneNo").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const response = await fetch("http://localhost:3000/api/users/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, phoneNo, password }),
+        });
+
+        if (response.status === 201) {
+          alert("Sign-up successful!");
+          window.location.href = "/"; // Redirect to login page after successful sign-up
+        } else {
+          const errorData = await response.json();
+          alert(`Sign-up failed: ${errorData.message || "Unknown error"}`);
+        }
+      } catch (error) {
+        console.error("Error during sign-up:", error);
+        alert("Something went wrong. Please try again later.");
+      }
+    }
+  </script>
+</head>
+<body class="flex items-center justify-center h-screen bg-gray-100">
+  <div class="w-full max-w-sm p-6 bg-white rounded-lg shadow-md">
+    <h2 class="mb-6 text-2xl font-semibold text-center text-gray-700">Sign Up</h2>
+    <form onsubmit="handleSignUp(event)">
+      <div class="mb-4">
+        <label for="name" class="block mb-2 text-sm font-medium text-gray-600">Name</label>
+        <input
+          type="text"
+          id="name"
+          class="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Enter your name"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label for="email" class="block mb-2 text-sm font-medium text-gray-600">Email</label>
+        <input
+          type="email"
+          id="email"
+          class="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Enter your email"
+          required
+        />
+      </div>
+      <div class="mb-4">
+        <label for="phoneNo" class="block mb-2 text-sm font-medium text-gray-600">Phone Number</label>
+        <input
+          type="tel"
+          id="phoneNo"
+          class="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Enter your phone number"
+          pattern="[0-9]{10}"
+          required
+        />
+      </div>
+      <div class="mb-6">
+        <label for="password" class="block mb-2 text-sm font-medium text-gray-600">Password</label>
+        <input
+          type="password"
+          id="password"
+          class="w-full px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Enter your password"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        class="w-full px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        Sign Up
+      </button>
+    </form>
+    <p class="mt-4 text-sm text-center text-gray-600">
+      Already have an account? 
+      <a
+        href="login.html"
+        class="text-blue-500 hover:underline"
+      >
+        Login here
+      </a>
+  </div>
+</body>
+</html>

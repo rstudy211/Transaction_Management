@@ -1,11 +1,18 @@
 const transactionService = require("../services/transactionService");
 const paymentService = require("../services/paymentService");
 const { v4: uuidv4 } = require("uuid");
+const cookieParser = require('cookie-parser');
 
 exports.initiatePayment = async (req, res, next) => {
   try {
-    const { senderId, receiverId, amount, type, description, status } =
+    const {   amount, type, description, status } =
       req.body; // Contains senderId, receiverId, amount, etc.
+    // Extract token from the cookie
+
+    
+
+    const senderId = req.user._id;
+    const receiverId = '675307767cdef23cb66601e7'
 
     // 1. Generate Unique IDs
     const transactionId = uuidv4();
@@ -30,10 +37,13 @@ exports.initiatePayment = async (req, res, next) => {
       senderId: dto.senderId,
       description: dto.description,
     });
+    console.log("payment response :",paymentResponse.data)
 
     res.status(201).json({
       transaction,
+      customerDetails: paymentResponse.data.customer_details,
       paymentSessionId: paymentResponse.data.payment_session_id,
+
     });
   } catch (error) {
     console.log(error);
@@ -44,6 +54,7 @@ exports.initiatePayment = async (req, res, next) => {
 
 exports.getTransaction = async (req, res, next) => {
   try {
+
     const transaction = await transactionService.getTransaction(req.params.id); // Corrected to `req.params.id`
     if (!transaction) {
       return res.status(404).json({ message: "Transaction not found" });
@@ -58,22 +69,39 @@ exports.getAllTransactions = async (req, res, next) => {
   try {
     const { senderId, receiverId, date, status } = req.query;
 
-    // Pass filters as a combined object
+    // Initialize filters object
     const filters = {};
-    if (senderId) filters.senderId = senderId;
+
+    // If the user is a normal user, always set the senderId to the logged-in user's ID
+    if (req.user.role === 'user') {
+      filters.senderId = req.user._id; // Always set senderId to the logged-in user's ID for normal users
+    }
+
+    // If the senderId is passed as a query parameter, allow admins to pass it, but prevent users from overriding their own senderId
+    if (senderId && req.user.role !== 'user') {
+      filters.senderId = senderId; // Admins can query by senderId, but not normal users
+    }
+
+    // Apply other filters if provided
     if (receiverId) filters.receiverId = receiverId;
     if (date) filters.date = date;
     if (status) filters.status = status;
 
     console.log(filters);
-    // Call service with filters
-    const transactions = await transactionService.getAllTransactions(filters);
 
-    res.status(200).json(transactions);
+    // Call service to get filtered transactions
+    const transactions = await transactionService.getAllTransactions(filters);
+    const count = await transactionService.countTransactions(filters);
+
+    res.status(200).json({
+      count,
+      transactions
+    });
   } catch (error) {
     next(error);
   }
 };
+
 
 exports.handlePaymentCallback = async (req, res, next) => {
   try {
@@ -88,6 +116,7 @@ exports.handlePaymentCallback = async (req, res, next) => {
 exports.handlePaymentWebhook = async (req, res, next) => {
   try {
     console.log("Step 1: We are in webhook");
+    // console.log("Here is the request ********",req)
     await paymentService.handlePaymentWebhook(req.body.data);
     res.status(200).send("Webhook processed");
   } catch (error) {
