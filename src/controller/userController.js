@@ -1,40 +1,48 @@
-const userService = require("../services/userService");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const userService = require("../services/userService");
+const {UserDTO} = require("../dtos/user/userDTO");
+const LoginUserDTO = require("../dtos/user/loginUserDTO");
+const { generateToken } = require("../utility/tokenUtil");
+const { sendResponse } = require("../utility/responseUtil");
 
 exports.loginUser = async (req, res, next) => {
-  const { email, password } = req.body;
-
   try {
-    // Find user by email
+    const loginData = new LoginUserDTO(req.body);
 
-    const user = await userService.findUserByEmail(email);
-    if (!user)
-      return res.status(404).json({ error: "Invalid email or password" });
+    const user = await userService.findUserByEmail(loginData.email);
+    if (!user) {
+      return sendResponse(res, {
+        success: false,
+        status: 404,
+        message: "Invalid email or password",
+      });
+    }
 
-    // Validate password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid)
-      return res.status(400).json({ error: "Invalid email or password" });
+    const isPasswordValid = await bcrypt.compare(
+      loginData.password,
+      user.password
+    );
+    if (!isPasswordValid) {
+      return sendResponse(res, {
+        success: false,
+        status: 400,
+        message: "Invalid email or password",
+      });
+    }
 
-    const secretKey = process.env.JWT_SECRET;
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id, role: user.role }, secretKey, {
-      expiresIn: "1h",
+    const token = generateToken(user, process.env.JWT_SECRET);
+    return sendResponse(res, {
+      success: true,
+      status: 200,
+      message: "Login successful",
+      token,
     });
-
-    // Set token in an HTTP-only cookie
-    res.cookie("Authorization", `Bearer ${token}`, {
-      httpOnly: true, // Prevents access from JavaScript
-      secure: process.env.NODE_ENV === "production", // Ensures the cookie is only sent over HTTPS in production
-      sameSite: "strict", // Protects against CSRF
-      maxAge: 3600000, // 1 hour in milliseconds
-    });
-
-    // Respond with success message
-    res.json({ message: "Login successful" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return sendResponse(res, {
+      success: false,
+      status: 500,
+      message: err.message,
+    });
   }
 };
 
@@ -42,56 +50,111 @@ exports.logoutUser = async (req, res, next) => {
   // Remove the authentication token cookie
   res.clearCookie("Authorization");
   // Send a response to indicate successful logout
-  res.status(200).json({ message: "Logged out successfully" });
+  return sendResponse(res, {
+    success: true,
+    status: 200,
+    message: "Logged out successfully",
+  });
 };
 
 exports.createUser = async (req, res, next) => {
-  const { name, email, password, phoneNo } = req.body;
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await userService.createUser({
-      name,
-      email,
-      password: hashedPassword,
-      phoneNo,
+    // Create a DTO instance
+    const userDTO = new UserDTO(req.body);
+
+
+    // Hash the password
+    userDTO.password = await bcrypt.hash(userDTO.password, 10);
+
+    // Save the user
+    const user = await userService.createUser(userDTO);
+    console.log(user)
+
+    // Send success response
+    return sendResponse(res, {
+      success: true,
+      status: 201,
+      message: "User created successfully",
+      data: user, // Optional: include created user data in the response
     });
-    res.status(201).json(user);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    // Handle validation errors
+    
+
+    // Handle other errors
+    console.error("Error creating user:", err);
+    return sendResponse(res, {
+      success: false,
+      status: 500,
+      message: err.message,
+    });
   }
 };
+
 
 exports.getUserById = async (req, res, next) => {
   try {
     const userId = req.params.id;
     const user = await userService.findUser(userId);
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return sendResponse(res, { 
+        success: false, 
+        status: 404, 
+        message: "User not found" 
+      });
     }
-    res.status(200).json(user);
+
+    // Use UserDTO to validate and format the user data
+    const userDTO = new UserDTO(user); // Assuming user object matches the DTO's constructor
+
+    // Send response using the sendResponse utility
+    return sendResponse(res, {
+      success: true,
+      status: 200,
+      message: "User found",
+      data: userDTO
+    });
   } catch (error) {
     next(error);
   }
 };
 
+
+// Get the currently authenticated user (assuming req.user is populated by authentication middleware)
 exports.getUser = async (req, res, next) => {
-  // console.log("kjdskj", req.user);
-  res.json({
-    name: req.user.name,
-    email: req.user.email,
-  });
+  try {
+    // Create a UserDTO instance with the authenticated user data
+    const userDTO = new UserDTO(req.user); // Assuming req.user has the properties (name, email, etc.)
+
+    // Send response using the sendResponse utility
+    return sendResponse(res, {
+      success: true,
+      status: 200,
+      message: "Authenticated user data",
+      data: userDTO
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 exports.allUsers = async (req, res, next) => {
   try {
     const users = await userService.findAllUsers();
-    const userDto = users.map((user) => {
-      return {
-        name: user.name,
-        email: user.email,
-      };
+
+    // Use UserDTO to map and format each user
+    const usersDTO = users.map((user) => {
+      return new UserDTO(user); // Ensure each user object is formatted using the DTO
     });
-    res.status(200).json(users);
+
+    // Send response using the sendResponse utility
+    return sendResponse(res, {
+      success: true,
+      status: 200,
+      message: "Users retrieved successfully",
+      data: usersDTO
+    });
   } catch (error) {
     next(error);
   }

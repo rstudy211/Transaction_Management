@@ -13,14 +13,14 @@ const auth = async (req, res, next) => {
 
     // Extract the token from the cookie (remove "Bearer " prefix)
     const token = authCookie.replace("Bearer ", "");
-    console.log(token);
+
     const secret = process.env.JWT_SECRET;
 
     // Verify the token
     const decoded = jwt.verify(token, secret);
 
     // Find the user associated with the token
-    const user = await User.findOne({ _id: decoded.id });
+    const user = await User.findByPk(decoded.id);
     if (!user) {
       throw new Error("User not found.");
     }
@@ -28,6 +28,7 @@ const auth = async (req, res, next) => {
     // Attach user and token to the request object
     // req.token = token;
     req.user = user;
+    console.log(user)
     next();
   } catch (e) {
     console.error(e.message);
@@ -39,6 +40,8 @@ const auth = async (req, res, next) => {
 const admin = async (req, res, next) => {
   try {
     // Assuming you're using JWT for authentication and have a middleware that decodes the token
+    console.log("Admin middleware");
+
     const authCookie = req.cookies.Authorization; // Requires cookie-parser middleware
     if (!authCookie) {
       throw new Error("Authorization cookie is missing.");
@@ -46,14 +49,15 @@ const admin = async (req, res, next) => {
 
     // Extract the token from the cookie (remove "Bearer " prefix)
     const token = authCookie.replace("Bearer ", "");
-    console.log(token);
+
     const secret = process.env.JWT_SECRET;
 
     // Verify the token
     const decoded = jwt.verify(token, secret);
-
+    console.log(decoded)
     // Fetch the user by ID (or use the details from the decoded token)
-    const user = await User.findById(decoded.id); // Ensure this matches the structure of your token
+    const user = await User.findByPk(decoded.id); // Ensure this matches the structure of your token
+    console.log("userInfo",decoded.id)
     if (!user) {
       return res.status(401).json({ message: "User not found." });
     }

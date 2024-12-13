@@ -48,13 +48,16 @@
           <p class="text-gray-500 text-sm">Complete your transaction safely</p>
         </div>
 
-        <!-- Payment Information -->
-        <div id="paymentInfo" class="text-center bg-blue-50 p-4 rounded-lg">
+
+         <!-- Payment Information -->
+         <div id="paymentInfo" class="text-center bg-blue-50 p-4 rounded-lg">
           <p id="amountDisplay" class="text-xl font-bold text-gray-800">
-            Amount to Pay: ₹<span id="amountValue">21</span>
+            Amount to Pay: ₹<span id="amountValue">0</span>
           </p>
           <p class="text-gray-600 text-sm">Description: Initiate Payment</p>
         </div>
+        <!-- Amount Input with Validation -->
+       
 
         <!-- Amount Input with Validation -->
         <div class="mb-4">
@@ -74,7 +77,8 @@
               step="0.01"
               class="w-full pl-8 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-300 transition duration-200"
               placeholder="Enter amount"
-              value="21"
+              value="0"
+              oninput="updateAmount()"
               required
             />
           </div>
@@ -132,6 +136,25 @@
         amountErrorEl: document.getElementById("amountError"),
         logoutButton: document.getElementById("logoutButton"),
       };
+      function updateAmount() {
+        const amountInput = document.getElementById("amountInput");
+        const amountValue = document.getElementById("amountValue");
+        const amountError = document.getElementById("amountError");
+
+        // Get the amount entered by the user
+        const amount = parseFloat(amountInput.value);
+
+        // Validation: Check if the amount is valid
+        if (isNaN(amount) || amount < 1 || amount > 100000) {
+          amountError.textContent =
+            "Please enter a valid amount between ₹1 and ₹100,000.";
+          amountError.classList.remove("hidden");
+          amountValue.textContent = "0"; // Reset the amount displayed
+        } else {
+          amountError.classList.add("hidden");
+          amountValue.textContent = amount.toFixed(2); // Update the amount to two decimal places
+        }
+      }
 
       function validateAmount(amount) {
         if (
@@ -248,7 +271,7 @@
 
       // Function to fetch user details
       function fetchUserDetails() {
-        console.log("we are in userDetails")
+        console.log("we are in userDetails");
         fetch("/api/users/me", {
           method: "GET",
           // headers: {
@@ -266,16 +289,17 @@
           .then((userData) => {
             if (userData) {
               // Populate user details in the placeholders
-              document.getElementById("userName").textContent = userData.name;
-              document.getElementById("userEmail").textContent = userData.email;
+              console.log(userData);
+              document.getElementById("userName").textContent =
+                userData.data.name;
+              document.getElementById("userEmail").textContent =
+                userData.data.email;
             }
           })
           .catch((error) =>
             console.error("Error fetching user details:", error)
           );
       }
-
-      
 
       // Fetch and display user details on page load
       document.addEventListener("DOMContentLoaded", fetchUserDetails);
